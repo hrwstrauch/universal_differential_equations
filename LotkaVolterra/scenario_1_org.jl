@@ -111,16 +111,16 @@ end
 adtype = Optimization.AutoZygote()
 optf = Optimization.OptimizationFunction((x,p)->loss(x), adtype)
 optprob = Optimization.OptimizationProblem(optf, ComponentVector{Float64}(p))
-res1 = Optimization.solve(optprob, ADAM(0.1), callback=callback, maxiters = 50)
+res1 = Optimization.solve(optprob, ADAM(0.1), callback=callback, maxiters = 200)
 println("Training loss after $(length(losses)) iterations: $(losses[end])")
 # Train with BFGS
 optprob2 = Optimization.OptimizationProblem(optf, res1.minimizer)
-res2 = Optimization.solve(optprob2, Optim.BFGS(initial_stepnorm=0.01), callback=callback, maxiters = 50)
+res2 = Optimization.solve(optprob2, Optim.BFGS(initial_stepnorm=0.01), callback=callback, maxiters = 10000)
 println("Final training loss after $(length(losses)) iterations: $(losses[end])")
 
 # Plot the losses
-pl_losses = plot(1:50, losses[1:50], yaxis = :log10, xaxis = :log10, xlabel = "Iterations", ylabel = "Loss", label = "ADAM", color = :blue)
-plot!(50:length(losses), losses[50:end], yaxis = :log10, xaxis = :log10, xlabel = "Iterations", ylabel = "Loss", label = "BFGS", color = :red)
+pl_losses = plot(1:200, losses[1:200], yaxis = :log10, xaxis = :log10, xlabel = "Iterations", ylabel = "Loss", label = "ADAM", color = :blue)
+plot!(201:length(losses), losses[201:end], yaxis = :log10, xaxis = :log10, xlabel = "Iterations", ylabel = "Loss", label = "BFGS", color = :red)
 savefig(pl_losses, joinpath(pwd(), "plots", "$(svname)_losses.pdf"))
 # Rename the best candidate
 p_trained = res2.minimizer
@@ -191,7 +191,7 @@ estimation_prob = ODEProblem(recovered_dynamics!, u0, tspan, parameters(nn_res))
 estimate = solve(estimation_prob, Tsit5(), saveat = solution.t)
 
 # Plot
-plot(solution) 
+plot(solution)
 plot!(estimate)
 
 ## Simulation
@@ -220,12 +220,12 @@ c2 = :orange # RGBA(132/255,159/255,173/255,1) # Red
 c3 = :blue # RGBA(255/255,90/255,0,1) # Orange
 c4 = :purple # RGBA(153/255,50/255,204/255,1) # Purple
 
-p1 = plot(t,abs.(Array(solution) .- estimate)' .+ eps(Float32),
-          lw = 3, yaxis = :log, title = "Timeseries of UODE Error",
-          color = [3 :orange], xlabel = "t",
-          label = ["x(t)" "y(t)"],
-          titlefont = "Helvetica", legendfont = "Helvetica",
-          legend = :topright)
+#p1 = plot(t,abs.(Array(solution) .- estimate)' .+ eps(Float32),
+#          lw = 3, yaxis = :log, title = "Timeseries of UODE Error",
+#          color = [3 :orange], xlabel = "t",
+#          label = ["x(t)" "y(t)"],
+#          titlefont = "Helvetica", legendfont = "Helvetica",
+#          legend = :topright)
 
 # Plot L₂
 p2 = plot3d(X̂[1,:], X̂[2,:], Ŷ[2,:], lw = 3,
@@ -234,6 +234,8 @@ p2 = plot3d(X̂[1,:], X̂[2,:], Ŷ[2,:], lw = 3,
      titlefont = "Helvetica", legendfont = "Helvetica",
      legend = :bottomright)
 plot!(X̂[1,:], X̂[2,:], Ȳ[2,:], lw = 3, label = "True Missing Term", color=c2)
+
+p1=p2
 
 p3 = scatter(solution, color = [c1 c2], label = ["x data" "y data"],
              title = "Extrapolated Fit From Short Training Data",

@@ -14,7 +14,7 @@ using Statistics
 using DelimitedFiles
 # Set a random seed for reproduceable behaviour
 using Random
-Random.seed!(5443)
+Random.seed!(2911)
 
 #### NOTE
 # Since the recent release of DataDrivenDiffEq v0.6.0 where a complete overhaul of the optimizers took
@@ -142,10 +142,14 @@ end
 res1 = DiffEqFlux.sciml_train(shooting_loss, p, ADAM(0.1f0), cb=callback, maxiters = 100)
 println("Training loss after $(length(losses)) iterations: $(losses[end])")
 # Train with BFGS to achieve partial fit of the data
+
 res2 = DiffEqFlux.sciml_train(shooting_loss, res1.minimizer, BFGS(initial_stepnorm=0.01f0), cb=callback, maxiters = 500)
 println("Training loss after $(length(losses)) iterations: $(losses[end])")
+
 # Full L2-Loss for full prediction
 res3 = DiffEqFlux.sciml_train(loss, res2.minimizer, BFGS(initial_stepnorm=0.01f0), cb=callback, maxiters = 10000)
+#res3 = DiffEqFlux.sciml_train(loss, res1.minimizer, BFGS(initial_stepnorm=0.02f0), cb=callback, maxiters = 10000)
+
 println("Final training loss after $(length(losses)) iterations: $(losses[end])")
 
 
@@ -153,6 +157,11 @@ pl_losses = plot(1:101, losses[1:101], yaxis = :log10, xaxis = :log10, xlabel = 
 plot!(102:302, losses[102:302], yaxis = :log10, xaxis = :log10, xlabel = "Iterations", ylabel = "Loss", label = "BFGS (Shooting)", color = :red)
 plot!(302:length(losses), losses[302:end], color = :black, label = "BFGS (L2)")
 savefig(pl_losses, joinpath(pwd(), "plots", "$(svname)_losses.pdf"))
+
+#pl_losses = plot(1:100, losses[1:100], yaxis = :log10, xaxis = :log10, xlabel = "Iterations", ylabel = "Loss", label = "ADAM (Shooting)", color = :blue)
+#plot!(102:302, losses[102:302], yaxis = :log10, xaxis = :log10, xlabel = "Iterations", ylabel = "Loss", label = "BFGS (Shooting)", color = :red)
+#plot!(302:length(losses), losses[302:end], color = :black, label = "BFGS (L2)")
+#savefig(pl_losses, joinpath(pwd(), "plots", "$(svname)_losses.pdf"))
 
 # Rename the best candidate
 p_trained = res3.minimizer
@@ -177,7 +186,10 @@ savefig(pl_missing, joinpath(pwd(), "plots", "$(svname)_reconstruction.pdf"))
 ## Symbolic regression via sparse regression (SINDy based)
 # We reuse the basis and optimizer defined at the beginning
 
-nn_problem = ContinuousDataDrivenProblem(X̂, tsample, DX = Ŷ)
+#nn_problem = ContinuousDataDrivenProblem(X̂, tsample, DX = Ŷ)
+nn_problem = ContinuousDataDrivenProblem(X̂, tsample, Ŷ)
+#nn_problem = ContinuousDataDrivenProblem(X̂, tsample, DX = Ŷ,DataDrivenDiffEq.GaussianKernel())
+
 nn_res = solve(nn_problem, basis, opt, maxiter = 10000, progress = true, normalize = false, denoise = true)
 println(nn_res)
 println(result(nn_res))
@@ -207,10 +219,14 @@ end
 
 # Post-fit the model
 res_fit = DiffEqFlux.sciml_train(loss_fit, p_model, BFGS(initial_stepnorm = 0.1f0), maxiters = 1000)
+#res_fit = DiffEqFlux.sciml_train(loss_fit, p_model, BFGS(initial_stepnorm = 0.05f0), maxiters = 10000)
+#res_fit = DiffEqFlux.sciml_train(loss_fit, p_model, BFGS(initial_stepnorm = 0.1f0), maxiters = 10000)
+
 p_fitted = res_fit.minimizer
 
 # Estimate
 estimate_rough = solve(estimation_prob, Tsit5(), saveat = 0.1*mean(diff(t)), p = p_model)
+#estimate = solve(estimation_prob, Tsit5(), saveat = 0.1*mean(diff(t)), p = p_fitted)
 estimate = solve(estimation_prob, Tsit5(), saveat = 0.1*mean(diff(t)), p = p_fitted)
 
 # Plot

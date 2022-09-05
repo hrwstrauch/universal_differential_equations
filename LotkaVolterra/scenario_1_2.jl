@@ -191,7 +191,7 @@ estimation_prob = ODEProblem(recovered_dynamics!, u0, tspan, parameters(nn_res))
 estimate = solve(estimation_prob, Tsit5(), saveat = solution.t)
 
 # Plot
-plot(solution) 
+plot(solution)
 plot!(estimate)
 
 ## Simulation
@@ -213,6 +213,7 @@ save(joinpath(pwd(), "results" ,"$(svname)recovery_$(noise_magnitude).jld2"),
     "long_solution", true_solution_long, "long_estimate", estimate_long) # Estimation
 
 
+
 ## Post Processing and Plots
 
 c1 = 3 # RGBA(174/255,192/255,201/255,1) # Maroon
@@ -220,12 +221,12 @@ c2 = :orange # RGBA(132/255,159/255,173/255,1) # Red
 c3 = :blue # RGBA(255/255,90/255,0,1) # Orange
 c4 = :purple # RGBA(153/255,50/255,204/255,1) # Purple
 
-p1 = plot(t,abs.(Array(solution) .- estimate)' .+ eps(Float32),
-          lw = 3, yaxis = :log, title = "Timeseries of UODE Error",
-          color = [3 :orange], xlabel = "t",
-          label = ["x(t)" "y(t)"],
-          titlefont = "Helvetica", legendfont = "Helvetica",
-          legend = :topright)
+#p1 = plot(t,abs.(Array(solution) .- estimate)' .+ eps(Float32),
+#          lw = 3, yaxis = :log, title = "Timeseries of UODE Error",
+#          color = [3 :orange], xlabel = "t",
+#          label = ["x(t)" "y(t)"],
+#          titlefont = "Helvetica", legendfont = "Helvetica",
+#          legend = :topright)
 
 # Plot L₂
 p2 = plot3d(X̂[1,:], X̂[2,:], Ŷ[2,:], lw = 3,
@@ -234,6 +235,8 @@ p2 = plot3d(X̂[1,:], X̂[2,:], Ŷ[2,:], lw = 3,
      titlefont = "Helvetica", legendfont = "Helvetica",
      legend = :bottomright)
 plot!(X̂[1,:], X̂[2,:], Ȳ[2,:], lw = 3, label = "True Missing Term", color=c2)
+
+p1 = p2 # degugging STH
 
 p3 = scatter(solution, color = [c1 c2], label = ["x data" "y data"],
              title = "Extrapolated Fit From Short Training Data",
